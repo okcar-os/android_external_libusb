@@ -1,0 +1,18 @@
+name: "libusb"
+description: "libusb is a library for USB device access from Linux, macOS, Windows, OpenBSD/NetBSD and Haiku userspace."
+third_party {
+  url {
+    type: HOMEPAGE
+    value: "https://libusb.info/"
+  }
+  url {
+    type: GIT
+    value: "https://github.com/libusb/libusb"
+  }
+  version: "v1.0.23"
+  last_upgrade_date {
+    year: 2020
+    month: 3
+    day: 18
+  }
+}
