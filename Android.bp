@@ -73,6 +73,14 @@ cc_library {
             cflags: ["-Werror"],
         },
 
+        linux_bionic: {
+            local_include_dirs: [
+                "linux",
+            ],
+
+            cflags: ["-Werror"],
+        },
+
         windows: {
             srcs: [
                 "libusb/os/poll_windows.c",
