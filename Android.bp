@@ -28,8 +28,8 @@ cc_library {
     target: {
         linux: {
             srcs: [
+                "libusb/os/events_posix.c",
                 "libusb/os/linux_usbfs.c",
-                "libusb/os/poll_posix.c",
                 "libusb/os/threads_posix.c",
                 "libusb/os/linux_netlink.c",
             ],
@@ -45,8 +45,8 @@ cc_library {
 
         darwin: {
             srcs: [
+                "libusb/os/events_posix.c",
                 "libusb/os/darwin_usb.c",
-                "libusb/os/poll_posix.c",
                 "libusb/os/threads_posix.c",
             ],
 
@@ -83,9 +83,9 @@ cc_library {
 
         windows: {
             srcs: [
-                "libusb/os/poll_windows.c",
+                "libusb/os/events_windows.c",
                 "libusb/os/threads_windows.c",
-                "libusb/os/windows_nt_common.c",
+                "libusb/os/windows_common.c",
                 "libusb/os/windows_usbdk.c",
                 "libusb/os/windows_winusb.c",
             ],
