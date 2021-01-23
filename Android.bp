@@ -61,7 +61,8 @@ cc_library {
             ],
 
             cflags: [
-                "-Wno-deprecated-declarations"
+                "-Wno-deprecated-declarations",
+                "-Wno-unguarded-availability",
             ],
         },
 
