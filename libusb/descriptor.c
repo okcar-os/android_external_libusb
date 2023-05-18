@@ -20,7 +20,7 @@
  */
 
 #include "libusbi.h"
-
+#include <ctype.h>
 #include <string.h>
 
 #define DESC_HEADER_LENGTH	2
@@ -1070,6 +1070,50 @@ void API_EXPORTED libusb_free_container_id_descriptor(
 	free(container_id);
 }
 
+static void usb_try_string_workarounds(unsigned char *buf, int *length)
+{
+	int newlength, oldlength = *length;
+
+	for (newlength = 2; newlength + 1 < oldlength; newlength += 2)
+		if (!isprint(buf[newlength]) || buf[newlength + 1])
+			break;
+
+	if (newlength > 2) {
+		buf[0] = newlength;
+		*length = newlength;
+	}
+}
+
+static int usb_string_sub(libusb_device_handle *dev_handle,
+	uint8_t index, uint16_t langid, unsigned char *buf, int length)
+{
+	// Some car's system has USB_QUIRK_STRING_FETCH_255 quirks
+	// If libusb_get_string_descriptor is used directly, it will cause the car's system to crash and become unresponsive(For example, like the Audi Q3)
+
+	// #define	EINVAL		22
+	int rc = -22;
+	if (rc < 2) {	
+		rc = libusb_get_string_descriptor(dev_handle, langid, index, buf, 2);
+		if (rc == 2)
+			rc = libusb_get_string_descriptor(dev_handle, langid, index, buf, buf[0]);
+	}
+
+	if (rc >= 2) {
+		if (!buf[0] && !buf[1])
+			usb_try_string_workarounds(buf, &rc);
+
+		/* There might be extra junk at the end of the descriptor */
+		if (buf[0] < rc)
+			rc = buf[0];
+
+		rc = rc - (rc & 1); /* force a multiple of two */
+	}
+
+	if (rc < 2)
+		rc = (rc < 0 ? rc : -22);
+
+	return rc;
+}
 /** \ingroup libusb_desc
  * Retrieve a string descriptor in C style ASCII.
  *
@@ -1101,7 +1145,7 @@ int API_EXPORTED libusb_get_string_descriptor_ascii(libusb_device_handle *dev_ha
 	if (desc_index == 0)
 		return LIBUSB_ERROR_INVALID_PARAM;
 
-	r = libusb_get_string_descriptor(dev_handle, 0, 0, str.buf, 4);
+	r = usb_string_sub(dev_handle, 0, 0, str.buf, 4);
 	if (r < 0)
 		return r;
 	else if (r != 4 || str.desc.bLength < 4)
@@ -1112,7 +1156,7 @@ int API_EXPORTED libusb_get_string_descriptor_ascii(libusb_device_handle *dev_ha
 		usbi_warn(HANDLE_CTX(dev_handle), "suspicious bLength %u for string descriptor", str.desc.bLength);
 
 	langid = libusb_le16_to_cpu(str.desc.wData[0]);
-	r = libusb_get_string_descriptor(dev_handle, desc_index, langid, str.buf, sizeof(str.buf));
+	r = usb_string_sub(dev_handle, desc_index, langid, str.buf, sizeof(str.buf));
 	if (r < 0)
 		return r;
 	else if (r < DESC_HEADER_LENGTH || str.desc.bLength > r)
